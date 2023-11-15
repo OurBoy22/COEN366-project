@@ -1,0 +1,1 @@
+Max is: 592, Min is: 1, Average is: 35.04761904761905
