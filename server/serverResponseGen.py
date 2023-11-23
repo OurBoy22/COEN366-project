@@ -1,10 +1,12 @@
 import generalFunctionsServer as generalFunctions
 def generatePutAndChangeResponse(dict_in): # for put and change 
+
     response = bytearray()
     if (dict_in['success'] == True):
         response.append(0b00000000)
     else:
-        handleError(dict_in)
+        print("Error detected in put and change response")
+        response.extend(handleError(dict_in))
     return response
 
 def generateGetResponse(dict_in): # for get request 
@@ -17,7 +19,8 @@ def generateGetResponse(dict_in): # for get request
         response.extend(dict_in['fileData'].encode())
         
     else:
-        handleError(dict_in)
+        print("Error detected in get response")
+        response.extend(handleError(dict_in))
     return response
 
 def generateStatResponse(dict_in):
@@ -29,7 +32,57 @@ def generateStatResponse(dict_in):
         response.extend(generalFunctions.convertIntInto32bit(dict_in['fileSize'] + 1)) 
         response.extend(dict_in['fileData'].encode())
     else:
-        handleError(dict_in)
+        print("Error detected in stat response")
+        response.extend(handleError(dict_in))
+    return response
+
+def generateHelpResponse():
+    command_help_string = """
+        Command: put filename
+        Description: Instructs the client to send a put request to the server, initiating the transfer of a file from the client machine to the server machine.
+        Format: put <filename>
+        Example: put file.txt
+
+        Command: get filename
+        Description: Instructs the client to send a get request to the server, retrieving a file from the server machine to the client machine.
+        Format: get <filename>
+        Example: get file.txt
+
+        Command: summary filename
+        Description: Instructs the client to send a summary request to the server, generating a statistical summary (maximum, minimum, and average) of a specific numeric file on the server. The server responds by sending a file containing the summary to the client.
+        Format: summary <filename>
+        Example: summary numbers.txt
+
+        Command: change OldFileName NewFileName
+        Description: Instructs the client to send a change request to the server, renaming a file on the server machine.
+        Format: change <OldFileName> <NewFileName>
+        Example: change oldfile.doc newfile.doc
+
+        Command: help
+        Description: Instructs the client to send a help request to the server, receiving a list of supported commands.
+        Format: help
+        Example: help
+
+        Command: bye
+        Description: Instructs the client to break the connection with the server and exit.
+        Format: bye
+        Example: bye
+        """
+    command_help_string = """
+        put: Send file to server
+        get: Retrieve file from server
+        summary: Get stats of numeric file
+        change: Rename a file on server
+        help: Get list of commands   
+        bye: Disconnect and exit
+        """
+    command_help_string = command_help_string.replace("        ", "")
+    command_help_string = "put\nget\nsummary\nchange\nhelp\nbye"
+    print(len(command_help_string)) 
+
+    response = bytearray()
+    response.append(generalFunctions.generate8bits(0b110, len(command_help_string))) #change the lenght parameter 
+    response.extend(command_help_string.encode())
     return response
 
 

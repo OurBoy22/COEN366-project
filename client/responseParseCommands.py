@@ -24,3 +24,18 @@ def parseGetFilename(commandIn, filenameLen, opcode):
     # print(dictOut)
     return dictOut
 
+def parseHelpResponse(commandIn, filenameLen, opcode):
+    #get the first three bits of the command
+    dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": "", 'fileData' : '', 'fileSize': ''}
+
+    # print("Filename Len is: ", filenameLen)
+
+    
+    for i in range(1, filenameLen+1): #TODO: fix boundary with the -1
+        # print(chr(commandIn[i]))
+        # print(chr(commandIn[i]), end='')
+        dictOut["fileData"] += chr(commandIn[i])
+    
+    # print(dictOut)
+    return dictOut
+
