@@ -1,4 +1,4 @@
-def parseGetFilename(commandIn, filenameLen, opcode):
+def parseGetFilename(commandIn, filenameLen, opcode): # for get request, parses the filename and returns the file data
     #get the first three bits of the command
     dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": "", 'fileData' : '', 'fileSize': ''}
 
@@ -24,7 +24,7 @@ def parseGetFilename(commandIn, filenameLen, opcode):
     # print(dictOut)
     return dictOut
 
-def parseHelpResponse(commandIn, filenameLen, opcode):
+def parseHelpResponse(commandIn, filenameLen, opcode): # for help request, parses the filename and returns the file data
     #get the first three bits of the command
     dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": "", 'fileData' : '', 'fileSize': ''}
 

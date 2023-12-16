@@ -1,9 +1,22 @@
+# Authors: Michael Hong, Luis Ramirez
+# Description: This file contains the functions that process the commands sent by the client
+
+
 import generalFunctionsServer as generalFunctions
+def generateErrorResponse(dict_in): # for put and change 
+
+    response = bytearray()
+    if (dict_in['success'] == True): # if successful
+        response.append(0b00000000) # append 
+    else:
+        # print("Error detected in put and change response")
+        response.extend(handleError(dict_in))
+    return response
 def generatePutAndChangeResponse(dict_in): # for put and change 
 
     response = bytearray()
-    if (dict_in['success'] == True):
-        response.append(0b00000000)
+    if (dict_in['success'] == True): # if successful
+        response.append(0b00000000) # append 
     else:
         print("Error detected in put and change response")
         response.extend(handleError(dict_in))
@@ -12,18 +25,18 @@ def generatePutAndChangeResponse(dict_in): # for put and change
 def generateGetResponse(dict_in): # for get request 
     response = bytearray()
     if (dict_in['success'] == True):
-        op_code = (1 << 5 | (len(dict_in['filename']) + 1))
-        response.append(op_code)
-        response.extend(dict_in['filename'].encode())
-        response.extend(generalFunctions.convertIntInto32bit(dict_in['fileSize'] + 1)) 
-        response.extend(dict_in['fileData'].encode())
+        op_code = (1 << 5 | (len(dict_in['filename']) + 1)) # shift left 5 bits and add the length of the filename + 1
+        response.append(op_code) # append the opcode 
+        response.extend(dict_in['filename'].encode()) # append the filename
+        response.extend(generalFunctions.convertIntInto32bit(dict_in['fileSize'] + 1))  # append the filesize + 1
+        response.extend(dict_in['fileData'].encode()) # append the filedata
         
     else:
         print("Error detected in get response")
         response.extend(handleError(dict_in))
     return response
 
-def generateStatResponse(dict_in):
+def generateStatResponse(dict_in): # for stat request for file summary
     response = bytearray()
     if (dict_in['success'] == True):
         op_code = (1 << 6 | (len(dict_in['filename']) + 1))
@@ -36,7 +49,7 @@ def generateStatResponse(dict_in):
         response.extend(handleError(dict_in))
     return response
 
-def generateHelpResponse():
+def generateHelpResponse(): # for help request
     command_help_string = """
         Command: put filename
         Description: Instructs the client to send a put request to the server, initiating the transfer of a file from the client machine to the server machine.
@@ -86,7 +99,7 @@ def generateHelpResponse():
     return response
 
 
-def handleError(dict_in):
+def handleError(dict_in): # handles errors
     errorCode = dict_in['error']
     if (errorCode == "011"): # file not found
         response = bytearray()

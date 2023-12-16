@@ -1,4 +1,7 @@
-def parsePutFilename(commandIn, filenameLen, opcode):
+# AUthors: Luis Ramirez, Michael Hong
+# Description: This file contains the functions that process the commands sent by the client
+
+def parsePutFilename(commandIn, filenameLen, opcode): # for put request, parses the filename and returns the file data
     #get the first three bits of the command
     dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": "", 'fileData' : '', 'fileSize': ''}
 
@@ -15,7 +18,7 @@ def parsePutFilename(commandIn, filenameLen, opcode):
     for i in range(filenameLen ,1+ len(dictOut["filename"])+4):
         filesize += commandIn[i]
     dictOut["fileSize"] = filesize 
-    print("File size is: " + bin(dictOut["fileSize"]))
+    # print("File size is: " + bin(dictOut["fileSize"]))
     
     for i in range(1+ len(dictOut["filename"]) + 4 , len(commandIn)):
         dictOut["fileData"] += chr(commandIn[i])
@@ -23,7 +26,7 @@ def parsePutFilename(commandIn, filenameLen, opcode):
     # print(dictOut)
     return dictOut
 
-def parseGetFilename(commandIn, filenameLen, opcode):
+def parseGetFilename(commandIn, filenameLen, opcode): # for get request, parses the filename and returns the file data
     dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": ""}
     filename = ""
     for i in range(1, filenameLen):
@@ -36,7 +39,7 @@ def parseGetFilename(commandIn, filenameLen, opcode):
     # print(dictOut)
     return dictOut
 
-def changeOldFilenameNewFilename(commandIn, filenameLen, opcode):
+def changeOldFilenameNewFilename(commandIn, filenameLen, opcode): # for change request, parses the old and new filename and renames the file
     dictOut = {"command": commandIn, "oldFilenameLen": filenameLen, "oldFileName": "", "opcode": opcode, "newFileNameLen": '', "newFilename": ""}
     oldFilename = ""
     for i in range(1, filenameLen):
@@ -52,12 +55,12 @@ def changeOldFilenameNewFilename(commandIn, filenameLen, opcode):
     for i in range( filenameLen+1 ,filenameLen + dictOut["newFileNameLen"]):
         #convert byte to char
         newFilename += chr(commandIn[i])
-        print(i , " " , chr(commandIn[i]))
+        # print(i , " " , chr(commandIn[i]))
     dictOut["newFilename"] = newFilename
     # print(dictOut)
     return dictOut
 
-def summaryFilename(commandIn, filenameLen, opcode):
+def summaryFilename(commandIn, filenameLen, opcode): # for summary request, parses the filename and returns the file data
     dictOut = {"command": commandIn, "filenameLen": filenameLen, "opcode": opcode, "filename": ""}
     fileName = ''
     for i in range(1, filenameLen):

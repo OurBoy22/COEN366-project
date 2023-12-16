@@ -1,3 +1,6 @@
+# Authors: Michael Hong, Luis Ramirez
+# Description: This file contains the functions that process the commands sent by the client
+
 import socket
 import time
 import traceback
@@ -5,28 +8,37 @@ import requestParseCommands
 import serverProcessCommands
 import generalFunctionsServer
 import serverResponseGen
-serverName = "127.0.0.1"
-serverPort = 12000
+serverName = "127.0.0.1" # IP address of the server, can be changed to any IP address
+serverPort = 12000 # Port number of the server, can be changed to any port number
+
 connectionType = "TCP"
-if (connectionType.upper() == "TCP"):
-    connectionType = socket.SOCK_STREAM
-elif (connectionType.upper() == "UDP"):
-    connectionType = socket.SOCK_DGRAM
-serverSocket = socket.socket(socket.AF_INET, connectionType)
-serverSocket.bind((serverName, serverPort))
+while True: # while loop to get the connection type
+    connectionType = input("Enter type of connection (TCP or UDP): ")
+    if (connectionType.upper() == "TCP"): # if TCP, create a TCP socket
+        connectionType = socket.SOCK_STREAM
+        serverSocket = socket.socket(socket.AF_INET, connectionType)
+        serverSocket.bind((serverName, serverPort))
+        break
+    elif (connectionType.upper() == "UDP"): # if UDP, create a UDP socket
+        connectionType = socket.SOCK_DGRAM
+        serverSocket = socket.socket(socket.AF_INET, connectionType)
+        serverSocket.bind((serverName, serverPort))
+        break
+    else:
+        print("Invalid input, please try again")
+  
+print("The server is now listening for connections on port " + str(serverPort) + " on IP address " + serverName)
 
-print('The server is ready to receive')
-
-def getOpcode(commandIn):
+def getOpcode(commandIn): # function to get the opcode from the command
     #get the first three bits of the command
     opcode = commandIn>>5
     print("OPCode is: " + bin(opcode))
     return opcode
 
-def execCommand(commandIn):
-    print("executing command" + str(commandIn))
+def execCommand(commandIn): # function to execute the command
+    # print("executing command" + str(commandIn))
     opcode = getOpcode(commandIn[0])
-    if (opcode == 0b000): 
+    if (opcode == 0b000):  # put filename
         print("put filename")
         dictOut = requestParseCommands.parsePutFilename(commandIn, getFilenameLength(commandIn[0]), opcode)
         # print(dictOut)
@@ -35,7 +47,7 @@ def execCommand(commandIn):
         return serverResponseGen.generatePutAndChangeResponse(response_dict)
 
 
-    elif (opcode == 0b001):
+    elif (opcode == 0b001): # get filename
         print("get filename")
         dictOut = requestParseCommands.parseGetFilename(commandIn, getFilenameLength(commandIn[0]), opcode)
         # print(dictOut)
@@ -44,7 +56,7 @@ def execCommand(commandIn):
         return serverResponseGen.generateGetResponse(response_dict)
 
         
-    elif (opcode == 0b010):
+    elif (opcode == 0b010): # change oldFilename newFilename
         print("Change oldFilename newFilename")
         dictOut = requestParseCommands.changeOldFilenameNewFilename(commandIn, getFilenameLength(commandIn[0]), opcode)
         # print(dictOut)
@@ -54,31 +66,31 @@ def execCommand(commandIn):
         
 
 
-    elif (opcode == 0b011):
+    elif (opcode == 0b011): # summary filename
         print("Summary filename")
         dictOut = requestParseCommands.summaryFilename(commandIn, getFilenameLength(commandIn[0]), opcode)
-        print(dictOut)
+        # print(dictOut)
         response_dict = serverProcessCommands.summaryFile(dictOut)
-        print(response_dict)
+        # print(response_dict)
         return serverResponseGen.generateStatResponse(response_dict)
 
-    elif (opcode == 0b100):
+    elif (opcode == 0b100): # help
         print("help")
         return serverResponseGen.generateHelpResponse()
 
 
        
-    else:
+    else: # invalid opcode
         print("Invalid opcode")
         # test = serverResponseGen.handleError({'success': False, 'error': '100'})
-        test = serverResponseGen.generatePutAndChangeResponse({'success': False, 'error': '100'})
-        print(test)
+        test = serverResponseGen.generateErrorResponse({'success': False, 'error': '100'})
+        # print(test)
         return test
 
 
 
 
-def getFilenameLength(commandIn):
+def getFilenameLength(commandIn): # function to get the filename length from the command
     fileNameLen = commandIn & 0b00011111
     print("Filename length is: " + bin(fileNameLen))
     return fileNameLen
@@ -95,17 +107,20 @@ if (connectionType == socket.SOCK_STREAM): # TCP
             
             
             request = ''
-            while True:
-                chunk = connectionSocket.recv(1024).decode(encoding='latin-1')
-                print(chunk)
-                if not chunk:
+            i = 0
+            while True:  # while loop to receive the client request
+                chunk = connectionSocket.recv(1024).decode(encoding='latin-1') # receive the client request
+                # print("Chunk: ", i)
+                # print(len(chunk)) 
+                if not chunk:  # if the chunk is empty, break
                     break
-                elif (len(chunk) < 1024):
+                elif (len(chunk) < 1024): # if the chunk is less than 1024, break
                     request += chunk
                     break
                 request += chunk
+                time.sleep(0.01)
         
-            bytearray1 = bytearray()
+            bytearray1 = bytearray() 
             # request = request.decode() # decode the client response
             my_bytes = request
             bytearray1.extend(request.encode(encoding='latin-1'))
@@ -116,19 +131,19 @@ if (connectionType == socket.SOCK_STREAM): # TCP
             # my_bytes = request
             # bytearray1.extend(request.encode(encoding='latin-1'))
             print('\n\n --------------Received Client Message-----------------')
-            print(request)
+            # print(request)
             # for byt in bytearray1:
             #     print(byt)
             # fileToSend = open("HelloServer.txt").read()  # open the html file and assign
             # fileLen = len(fileToSend)   # get the length of the html file
             # # response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %i\r\n\r\n%s' % (fileLen, fileToSend) # double spacing at the end needed
             # response = fileToSend
-            if (request == 'ping'):
+            if (request == 'ping'): # if the client sends a ping, send a pong
                 print("Received ping from client")
                 connectionSocket.sendall("pong".encode())
-            else:
+            else: # otherwise, execute the command
                 reponse = execCommand(bytearray1)
-                print("Response is: " + str(reponse))
+                # print("Response is: " + str(reponse))
                 # print(reponse)
                 # print("length of response is: " , len(reponse))
                 connectionSocket.sendall(reponse) # Use send all if needed
@@ -144,113 +159,7 @@ if (connectionType == socket.SOCK_STREAM): # TCP
 
 
 
-
-
-
-
-
-
-    # def parseRequest(request):
-    #     print("\n\nParsing dictionary: ")
-    #     split_req = request.split('\r\n')
-    #     # print(split_req)
-
-    #     contentsArr = [] # stores the contents of dictionary
-    #     headersArr = [] # stores the keys of dictionary
-    #     for line in split_req: # Loop through every line of the request
-    #         header = ''
-    #         content = ''
-    #         headerFound = False
-    #         if ("GET" in line): # If the line contains GET, then it is the first line of the request
-    #             header = "GET"
-    #             content = line.replace("GET", "")
-    #         else:
-    #             for char in line: # Loop through every character of the line
-    #                 if (not headerFound): # If the header has not been found yet, then add the character to the header
-    #                     if char == ':': # If the character is a colon, then the header has been found
-    #                         headerFound = True
-    #                     else:
-    #                         header += char
-    #                 else:
-    #                     content += char
-    #                 # print("Header is: " + header)
-    #                 # print("Content is: " + content)
-    #         if (header != '' and content != ''): # If the header and content are not empty, then add them to their respective arrays
-    #             contentsArr.append(content)
-    #             headersArr.append(header)
-
-    #     # print("---------------CONTENTSARR---------")
-    #     # for x in contentsArr:
-    #     #     print(x)
-
-
-    #     # print("---------------HEADERSARR---------")
-    #     # for x in headersArr:
-    #     #     print(x)
-
-    #     print("\n\n----------DICTIONARY----------")
-    #     dictionary = {}
-    #     for i in range(0, len(contentsArr)): # Loop through the contents array and add the contents to the dictionary
-    #         dictionary[headersArr[i].strip()] = contentsArr[i].strip()
-
-    #     for key in dictionary: # Print the dictionary
-    #         print(key + ": " + dictionary[key])
-
-    #     return dictionary
-
-    # def checkDesiredFile(dictionary): # fetches the required file 
-    #     print("\n\nChecking desired file: ")
-    #     try:       
-    #         s ='' # stores the path of the request
-    #         for char in dictionary["GET"]: # Loop through every character of the GET request
-    #             if (char == " "): # If the character is a space, then the link has been found
-    #                 break
-    #             else:
-    #                 s += char
-
-    #         # as it is now, the s variable contains the path of the request in the form "/COEN366"
-    #         s = s.replace('/','') # remove the first slash
-    #         print(s)
-    #         return s
-    #     except (Exception):
-    #         print("Could not resolve the link of the request")
-    #         print(traceback.format_exc())
-
-
-
-    # while True:
-    #     connectionSocket, addr = serverSocket.accept() # Accepts the connection
-    #     print('accepting connection') 
-    #     request = connectionSocket.recv(1024).decode() # decode the client response
-    #     print('\n\nReceived Client Message')
-    #     print(request)
-
-    #     if (request != ''): # if the response is valid
-
-    #         dictionary = parseRequest(request) # parse the request and assign it to a dictionary
-    #         desiredFile = checkDesiredFile(dictionary) # check the desired path to reach (/COEN366 in this case)
-        
-    #         try: # try to open the html file
-    #             print(desiredFile)
-    #             html_code = open(desiredFile +  ".html").read()  # open the html file and assign
-    #             html_len = len(html_code)   # get the length of the html file
-    #             response = 'HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nContent-Length: %i\r\n\r\n%s' % (html_len, html_code) # double spacing at the end needed
-    #         except: # if the file is not found, then send a not_found response
-    #             print("\n\nCould not locate the file based on the requested path") 
-    #             response = 'HTTP/1.1 404 Not Found\r\n'
-
-    #     else: # send not_found response if the request is invalid
-    #         print("\n\nInvalid response received")
-    #         response = 'HTTP/1.1 400 Bad Request\r\n'
-
-    #     #send response back and close connection
-    #     connectionSocket.send(response.encode()) # Use send all if needed
-    #     print('\n\nSending Response') 
-    #     print(response)
-    #     connectionSocket.close()
-    #     # time.sleep(4)
-
-else:
+else: # UDP
         while True:
 
             
@@ -269,10 +178,10 @@ else:
                 print("LENGTH TO RECEIVE: ", length_to_receive)
                 data = ''
                 current_count = 0
-                while len(data) < length_to_receive:
+                while len(data) < length_to_receive: # while loop to receive the client request
                     chunk, server_address = serverSocket.recvfrom(1024)
-                    print('/n CHUNK: ', current_count)
-                    print(chunk)
+                    # print('/n CHUNK: ', current_count)
+                    # print(chunk)
                     # time.sleep(0.5)
                     serverSocket.sendto("0".encode(), client_address)
                     data += chunk.decode(encoding='latin-1')
@@ -283,18 +192,18 @@ else:
                 bytearray1.extend(data.encode(encoding='latin-1'))
 
                 reponse = execCommand(bytearray1)
-                print("Response is: " + str(reponse))
+                # print("Response is: " + str(reponse))
                 
 
                 bytesSend = bytearray()
                 bytesSend.extend(str(len(reponse)).encode(encoding='latin-1'))
                 serverSocket.sendto(bytesSend, client_address)
                 # next_index, client_address = serverSocket.recvfrom(1024)
-                for i in range(0, len(reponse), 1024):
+                for i in range(0, len(reponse), 1024): # while loop to send the response to the client in chunks of 1024 bytes
                     chunk = reponse[i:i + 1024]
                     serverSocket.sendto(chunk, client_address)
                     ack, client_address = serverSocket.recvfrom(1024)
-                    print(ack)
+                    # print(ack)
                 # request = data.decode(encoding='latin-1')
             
                
